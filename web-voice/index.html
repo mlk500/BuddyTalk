@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BuddyTalk - Voice Prototype</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>BuddyTalk – Voice Prototype</h1>
+
+      <section class="card">
+        <h2>Speech to Text (STT)</h2>
+        <p class="hint">Press the mic and speak (English).</p>
+
+        <div class="row">
+          <button id="btnStart" class="btn primary">🎤 Start</button>
+          <button id="btnStop" class="btn" disabled>⏹ Stop</button>
+        </div>
+
+        <label for="transcript">Transcript</label>
+        <textarea id="transcript" rows="4" placeholder="What the child said..."></textarea>
+
+        <div id="sttStatus" class="status">Idle</div>
+      </section>
+
+      <section class="card">
+        <h2>Text to Speech (TTS)</h2>
+        <p class="hint">Click Speak to hear the character response.</p>
+
+        <label for="response">Character response</label>
+        <textarea id="response" rows="4">Hi! Tell me what you did today!</textarea>
+
+        <div class="row">
+          <button id="btnSpeak" class="btn primary">🔊 Speak</button>
+          <button id="btnStopSpeak" class="btn">🛑 Stop speaking</button>
+        </div>
+
+        <div class="row">
+          <label for="voiceSelect">Voice</label>
+          <select id="voiceSelect"></select>
+        </div>
+
+        <div id="ttsStatus" class="status">Ready</div>
+      </section>
+
+      <section class="card">
+        <h2>Mini Loop (no LLM yet)</h2>
+        <p class="hint">
+          After STT, click "Generate response" to create a simple placeholder reply.
+          Later, your partner will replace it with Claude/GPT output.
+        </p>
+        <button id="btnGenerate" class="btn">✨ Generate response</button>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
