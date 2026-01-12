@@ -36,7 +36,7 @@ To get started with the main application:
 cd buddytalk-app
 npm install
 cp .env.example .env
-# Add your Claude API key to .env
+# Add your Claude/Gemini/ChatGPT API key to .env
 npm run dev
 ```
 
