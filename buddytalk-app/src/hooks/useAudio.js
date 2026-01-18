@@ -118,9 +118,9 @@ export default function useAudio(voiceConfig = {}) {
     onSpeechResultCallbackRef.current = callback;
   }, []);
 
-  // Speak text using TTS
+  // Speak text using TTS and optionally provide audio blob
   const speak = useCallback(
-    (text, onComplete) => {
+    (text, onComplete, onAudioReady) => {
       console.log('🔊 Attempting to speak:', text);
 
       if (!('speechSynthesis' in window)) {

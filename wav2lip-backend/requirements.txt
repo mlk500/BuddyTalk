@@ -1,0 +1,21 @@
+# FastAPI backend
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# ML/CV libraries - using modern compatible versions
+torch>=2.6.0
+torchvision>=0.15.0
+numpy>=1.24.0
+opencv-python>=4.9.0
+opencv-contrib-python>=4.9.0
+librosa>=0.10.0
+scipy>=1.11.0
+tqdm>=4.66.0
+numba>=0.58.0
+pillow>=10.0.0
+
+# Audio processing
+soundfile>=0.12.1
+resampy>=0.4.2

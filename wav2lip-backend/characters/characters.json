@@ -1,0 +1,9 @@
+{
+  "elsa": {
+    "name": "Elsa",
+    "media_type": "image",
+    "media_file": "elsa2.png",
+    "idle_media": "idle/elsa.gif",
+    "description": "Frozen's Elsa character"
+  }
+}

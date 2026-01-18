@@ -9,8 +9,21 @@ import StartPrompt from './StartPrompt';
 
 export default function Conversation({ character, onExit }) {
   const [hasStarted, setHasStarted] = useState(false);
+  const [lipSyncVideoUrl, setLipSyncVideoUrl] = useState(null);
   const { status, messages, setStatus, addMessage } = useConversation(character);
   const audio = useAudio(character.voiceConfig);
+
+  // Use placeholder lip-sync video when speaking (until Fish Audio TTS is integrated)
+  const placeholderVideoUrl = `/api/characters/${character.id}/placeholder-lipsync`;
+
+  // Set lip-sync video URL when character starts speaking
+  useEffect(() => {
+    if (audio.isSpeaking) {
+      setLipSyncVideoUrl(placeholderVideoUrl);
+    } else {
+      setLipSyncVideoUrl(null);
+    }
+  }, [audio.isSpeaking, placeholderVideoUrl]);
 
   // Handle speech result from child
   const handleChildSpeech = useCallback(
@@ -124,6 +137,8 @@ export default function Conversation({ character, onExit }) {
           character={character}
           expression={audio.isSpeaking ? 'talking' : 'neutral'}
           isSpeaking={audio.isSpeaking}
+          status={status}
+          videoUrl={lipSyncVideoUrl}
         />
 
         {/* Status indicator for debugging */}
