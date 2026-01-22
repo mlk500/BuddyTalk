@@ -1,11 +1,12 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import StreamingResponse, FileResponse, Response
 import shutil
 import os
 from pathlib import Path
 import uuid
 import json
+import httpx
 from .wav2lip_inference import generate_lip_sync
 
 app = FastAPI(title="Wav2Lip Backend API")
@@ -101,6 +102,28 @@ async def get_placeholder_lipsync(character_id: str):
     return FileResponse(placeholder_path, media_type="video/mp4")
 
 
+@app.get("/api/characters/{character_id}/greeting-audio")
+async def get_greeting_audio(character_id: str):
+    """Get pre-generated greeting audio for character."""
+    greeting_path = CHARACTERS_DIR / f"greeting_{character_id}.mp3"
+
+    if not greeting_path.exists():
+        raise HTTPException(status_code=404, detail="Greeting audio not found")
+
+    return FileResponse(greeting_path, media_type="audio/mpeg")
+
+
+@app.get("/api/characters/{character_id}/greeting-video")
+async def get_greeting_video(character_id: str):
+    """Get pre-generated greeting lip-sync video for character."""
+    greeting_video_path = CHARACTERS_DIR / f"greeting_lipsync_{character_id}.mp4"
+
+    if not greeting_video_path.exists():
+        raise HTTPException(status_code=404, detail="Greeting video not found")
+
+    return FileResponse(greeting_video_path, media_type="video/mp4")
+
+
 @app.post("/api/generate-lipsync")
 async def create_lipsync_video(
     character_id: str = Form(..., description="Character ID (e.g., 'elsa')"),
@@ -193,6 +216,52 @@ async def cleanup_output(session_id: str):
         return {"message": "Cleanup successful"}
 
     return {"message": "File not found"}
+
+
+@app.post("/api/fish-audio/tts")
+async def fish_audio_proxy(request: Request):
+    """Proxy endpoint for Fish Audio TTS to avoid CORS issues."""
+    try:
+        # Get request body
+        body = await request.json()
+
+        # Get Fish Audio API key from request headers
+        fish_api_key = request.headers.get("X-Fish-Audio-Key")
+        if not fish_api_key:
+            raise HTTPException(status_code=400, detail="Fish Audio API key required in X-Fish-Audio-Key header")
+
+        # Get model from query params
+        model = request.query_params.get("model", "s1")
+
+        # Forward request to Fish Audio API
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                f"https://api.fish.audio/v1/tts?model={model}",
+                headers={
+                    "Authorization": f"Bearer {fish_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=body,
+            )
+
+            if response.status_code != 200:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Fish Audio API error: {response.text}"
+                )
+
+            # Return audio blob
+            return Response(
+                content=response.content,
+                media_type="audio/mpeg",
+                headers={
+                    "Content-Type": "audio/mpeg",
+                }
+            )
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Fish Audio API timeout")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Proxy error: {str(e)}")
 
 
 @app.get("/health")
