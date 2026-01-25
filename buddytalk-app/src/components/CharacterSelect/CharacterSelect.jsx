@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { characters } from '../../config/characters';
-import { colors } from '../../styles/theme';
+import { colors, borderRadius, shadows, spacing } from '../../styles/theme';
 import CharacterCard from './CharacterCard';
 import { speak, stopSpeaking } from '../../utils/voiceControl';
+import Button from '../shared/Button';
 
 export default function CharacterSelect({ onCharacterSelect, onBack, userName }) {
   const [hasSpoken, setHasSpoken] = useState(false);
@@ -80,60 +81,92 @@ export default function CharacterSelect({ onCharacterSelect, onBack, userName })
         minHeight: '100vh',
         backgroundColor: colors.background,
         padding: '40px 20px',
-        gap: '40px',
+        gap: spacing.xxl,
         position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      {/* Back Button */}
-      <button
-        onClick={onBack}
+      {/* Decorative floating shapes */}
+      <div
         style={{
           position: 'absolute',
-          top: '30px',
-          left: '30px',
-          padding: '12px 24px',
-          fontSize: '16px',
-          fontWeight: 'bold',
-          backgroundColor: 'white',
-          color: '#666',
-          border: '2px solid #ddd',
-          borderRadius: '12px',
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+          top: '10%',
+          left: '5%',
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          background: 'rgba(124, 77, 255, 0.08)',
+          animation: 'float 6s ease-in-out infinite',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#999';
-          e.currentTarget.style.transform = 'scale(1.05)';
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: '60%',
+          right: '10%',
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          background: 'rgba(124, 77, 255, 0.06)',
+          animation: 'float 8s ease-in-out infinite 1s',
         }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = '#ddd';
-          e.currentTarget.style.transform = 'scale(1)';
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '15%',
+          left: '15%',
+          fontSize: '40px',
+          opacity: 0.3,
+          animation: 'float 7s ease-in-out infinite 2s',
         }}
       >
-        ← Back
-      </button>
+        ⭐
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: '25%',
+          right: '20%',
+          fontSize: '35px',
+          opacity: 0.3,
+          animation: 'float 9s ease-in-out infinite',
+        }}
+      >
+        ✨
+      </div>
+
+      {/* Back Button */}
+      <div style={{ position: 'absolute', top: spacing.lg, left: spacing.lg }}>
+        <Button onClick={onBack} variant="ghost" icon="←">
+          Back
+        </Button>
+      </div>
 
       {/* Header */}
       <div
         style={{
           textAlign: 'center',
+          animation: 'fadeIn 0.5s ease forwards',
+          zIndex: 1,
         }}
       >
         <h1
           style={{
             fontSize: '48px',
-            fontWeight: 'bold',
+            fontWeight: 800,
             color: colors.primary,
-            marginBottom: '10px',
+            marginBottom: spacing.sm,
+            fontFamily: "'Nunito', sans-serif",
           }}
         >
-          {userName ? `Hi ${userName}!` : 'Hi there!'}
+          {userName ? `Hi ${userName}! 👋` : 'Hi there! 👋'}
         </h1>
         <p
           style={{
             fontSize: '24px',
-            color: '#666',
+            color: colors.textLight,
+            fontWeight: 600,
           }}
         >
           Who do you want to talk to today?
@@ -145,13 +178,15 @@ export default function CharacterSelect({ onCharacterSelect, onBack, userName })
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: spacing.sm,
           width: '100%',
           maxWidth: '600px',
-          backgroundColor: 'white',
-          borderRadius: '50px',
-          padding: '12px 24px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          backgroundColor: colors.white,
+          borderRadius: borderRadius.full,
+          padding: `${spacing.sm} ${spacing.lg}`,
+          boxShadow: shadows.card,
+          animation: 'fadeIn 0.6s ease forwards',
+          zIndex: 1,
         }}
       >
         <input
@@ -165,17 +200,20 @@ export default function CharacterSelect({ onCharacterSelect, onBack, userName })
             outline: 'none',
             fontSize: '18px',
             backgroundColor: 'transparent',
+            fontFamily: "'Nunito', sans-serif",
+            fontWeight: 600,
+            color: colors.text,
           }}
         />
         <button
           onClick={handleVoiceSearch}
           style={{
-            padding: '10px 16px',
+            padding: spacing.sm,
             fontSize: '20px',
             backgroundColor: isListening ? colors.primary : 'transparent',
-            color: isListening ? 'white' : '#666',
+            color: isListening ? colors.white : colors.textLight,
             border: 'none',
-            borderRadius: '50%',
+            borderRadius: borderRadius.full,
             cursor: 'pointer',
             transition: 'all 0.2s ease',
             width: '44px',
@@ -183,6 +221,7 @@ export default function CharacterSelect({ onCharacterSelect, onBack, userName })
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            animation: isListening ? 'pulse 1s ease-in-out infinite' : 'none',
           }}
           title="Voice search"
         >
@@ -195,32 +234,51 @@ export default function CharacterSelect({ onCharacterSelect, onBack, userName })
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 350px))',
-          gap: '40px',
+          gap: spacing.xxl,
           width: '100%',
           maxWidth: '1200px',
           justifyContent: 'center',
+          zIndex: 1,
         }}
       >
-        {filteredCharacters.map((character) => (
-          <CharacterCard
+        {filteredCharacters.map((character, index) => (
+          <div
             key={character.id}
-            character={character}
-            onSelect={onCharacterSelect}
-          />
+            style={{
+              animationDelay: `${index * 0.1}s`,
+            }}
+          >
+            <CharacterCard character={character} onSelect={onCharacterSelect} />
+          </div>
         ))}
       </div>
 
       {/* No results message */}
       {filteredCharacters.length === 0 && (
-        <p
+        <div
           style={{
-            fontSize: '20px',
-            color: '#999',
             textAlign: 'center',
+            animation: 'fadeIn 0.4s ease forwards',
           }}
         >
-          No characters found. Try a different search!
-        </p>
+          <p
+            style={{
+              fontSize: '48px',
+              marginBottom: spacing.md,
+            }}
+          >
+            🔍
+          </p>
+          <p
+            style={{
+              fontSize: '20px',
+              color: colors.textLight,
+              fontWeight: 600,
+            }}
+          >
+            No characters found. Try a different search!
+          </p>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { colors } from '../../styles/theme';
+import { colors, borderRadius, shadows, spacing } from '../../styles/theme';
 import {
   getFamilyByCode,
   createFamily,
@@ -7,6 +7,8 @@ import {
   getStoredFamilyCode
 } from '../../services/database';
 import { speak, stopSpeaking } from '../../utils/voiceControl';
+import Button from '../shared/Button';
+import Loading from '../shared/Loading';
 
 export default function Landing({ onFamilyLoaded }) {
   const [view, setView] = useState('main'); // 'main', 'enter', 'create'
@@ -87,6 +89,7 @@ export default function Landing({ onFamilyLoaded }) {
       const { family_code, family_id } = await createFamily();
       setNewFamilyCode(family_code);
       setView('create');
+      setLoading(false);
 
       // Speak the code
       setTimeout(() => {
@@ -120,120 +123,161 @@ export default function Landing({ onFamilyLoaded }) {
           justifyContent: 'center',
           minHeight: '100vh',
           backgroundColor: colors.background,
-          padding: '40px 20px',
+          padding: spacing.xxl,
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        {/* Logo */}
+        {/* Decorative background elements */}
         <div
           style={{
-            fontSize: '80px',
-            marginBottom: '20px',
+            position: 'absolute',
+            top: '15%',
+            left: '10%',
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: 'rgba(124, 77, 255, 0.08)',
+            animation: 'float 8s ease-in-out infinite',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '20%',
+            right: '15%',
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'rgba(74, 222, 128, 0.1)',
+            animation: 'float 10s ease-in-out infinite 2s',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: '30%',
+            right: '10%',
+            fontSize: '60px',
+            opacity: 0.2,
+            animation: 'float 12s ease-in-out infinite 1s',
           }}
         >
-          💬
+          ⭐
         </div>
 
-        {/* App Name */}
-        <h1
+        {/* Content container */}
+        <div
           style={{
-            fontSize: '64px',
-            fontWeight: 'bold',
-            color: colors.primary,
-            marginBottom: '10px',
-            fontFamily: "'Quicksand', sans-serif",
-          }}
-        >
-          BuddyTalk
-        </h1>
-
-        {/* Tagline */}
-        <p
-          style={{
-            fontSize: '24px',
-            color: '#666',
-            marginBottom: '60px',
             textAlign: 'center',
+            animation: 'fadeIn 0.6s ease forwards',
+            zIndex: 1,
           }}
         >
-          Talk with your favorite characters!
-        </p>
-
-        {/* Buttons */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '20px',
-            width: '100%',
-            maxWidth: '400px',
-          }}
-        >
-          <button
-            onClick={() => setView('enter')}
+          {/* Waving character illustration */}
+          <div
             style={{
-              padding: '20px 40px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              backgroundColor: colors.primary,
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.opacity = '1';
+              marginBottom: spacing.lg,
+              animation: 'breathe 3s ease-in-out infinite',
             }}
           >
-            I Have a Family Code
-          </button>
+            <img
+              src="/assets/waving.png"
+              alt="Friendly character waving"
+              style={{
+                width: '200px',
+                height: 'auto',
+                filter: 'drop-shadow(0 10px 30px rgba(124, 77, 255, 0.2))',
+              }}
+            />
+          </div>
 
-          <button
-            onClick={handleCreateFamily}
-            disabled={loading}
+          {/* App Name */}
+          <h1
             style={{
-              padding: '20px 40px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: loading ? 0.6 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.opacity = '0.9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.opacity = '1';
+              fontSize: '72px',
+              fontWeight: 800,
+              background: colors.primaryGradient,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: spacing.sm,
+              fontFamily: "'Nunito', sans-serif",
             }}
           >
-            {loading ? 'Creating...' : 'Create New Family'}
-          </button>
-        </div>
+            BuddyTalk
+          </h1>
 
-        {error && (
+          {/* Tagline */}
           <p
             style={{
-              marginTop: '20px',
-              color: '#ef4444',
-              fontSize: '16px',
+              fontSize: '28px',
+              color: colors.textLight,
+              marginBottom: spacing.xxl,
+              fontWeight: 600,
             }}
           >
-            {error}
+            Talk with your favorite characters!
           </p>
-        )}
+
+          {/* Buttons */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: spacing.lg,
+              width: '100%',
+              maxWidth: '450px',
+              margin: '0 auto',
+            }}
+          >
+            <Button
+              onClick={() => setView('enter')}
+              variant="primary"
+              size="large"
+              fullWidth
+              icon="🔑"
+            >
+              I Have a Family Code
+            </Button>
+
+            <Button
+              onClick={handleCreateFamily}
+              disabled={loading}
+              size="large"
+              fullWidth
+              icon="✨"
+              style={{
+                background: loading ? colors.primaryGradient : 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
+              }}
+            >
+              {loading ? <Loading text="" size="small" /> : 'Create New Family'}
+            </Button>
+          </div>
+
+          {error && (
+            <div
+              style={{
+                marginTop: spacing.lg,
+                padding: spacing.md,
+                backgroundColor: '#fee2e2',
+                borderRadius: borderRadius.md,
+                animation: 'fadeIn 0.3s ease forwards',
+              }}
+            >
+              <p
+                style={{
+                  color: '#dc2626',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                {error}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -249,24 +293,26 @@ export default function Landing({ onFamilyLoaded }) {
           justifyContent: 'center',
           minHeight: '100vh',
           backgroundColor: colors.background,
-          padding: '40px 20px',
+          padding: spacing.xxl,
         }}
       >
         <div
           style={{
-            backgroundColor: 'white',
-            borderRadius: '30px',
-            padding: '60px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-            maxWidth: '500px',
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing.xxl,
+            boxShadow: shadows.cardHover,
+            maxWidth: '550px',
             width: '100%',
+            animation: 'fadeIn 0.4s ease forwards',
           }}
         >
           <div
             style={{
-              fontSize: '60px',
+              fontSize: '80px',
               textAlign: 'center',
-              marginBottom: '20px',
+              marginBottom: spacing.lg,
+              animation: 'bounce 2s ease-in-out infinite',
             }}
           >
             🔑
@@ -274,15 +320,28 @@ export default function Landing({ onFamilyLoaded }) {
 
           <h2
             style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
+              fontSize: '36px',
+              fontWeight: 800,
               color: colors.primary,
-              marginBottom: '20px',
+              marginBottom: spacing.md,
               textAlign: 'center',
+              fontFamily: "'Nunito', sans-serif",
             }}
           >
             Enter Your Family Code
           </h2>
+
+          <p
+            style={{
+              fontSize: '16px',
+              color: colors.textLight,
+              textAlign: 'center',
+              marginBottom: spacing.xl,
+              fontWeight: 600,
+            }}
+          >
+            Type your family code to access your profiles
+          </p>
 
           <input
             type="text"
@@ -291,16 +350,25 @@ export default function Landing({ onFamilyLoaded }) {
             placeholder="HAPPY-DOLPHIN-42"
             style={{
               width: '100%',
-              padding: '20px',
-              fontSize: '20px',
-              fontWeight: 'bold',
+              padding: spacing.lg,
+              fontSize: '22px',
+              fontWeight: 700,
               color: colors.primary,
               backgroundColor: colors.childSpeech,
-              border: '3px solid ' + colors.primary,
-              borderRadius: '15px',
+              border: `3px solid ${colors.primary}`,
+              borderRadius: borderRadius.md,
               outline: 'none',
               textAlign: 'center',
-              marginBottom: '30px',
+              marginBottom: spacing.lg,
+              fontFamily: "'Nunito', sans-serif",
+              transition: 'all 0.2s ease',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = colors.primary;
+              e.currentTarget.style.boxShadow = shadows.button;
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = 'none';
             }}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
@@ -310,82 +378,57 @@ export default function Landing({ onFamilyLoaded }) {
           />
 
           {error && (
-            <p
+            <div
               style={{
-                color: '#ef4444',
-                fontSize: '16px',
-                textAlign: 'center',
-                marginBottom: '20px',
+                marginBottom: spacing.lg,
+                padding: spacing.md,
+                backgroundColor: '#fee2e2',
+                borderRadius: borderRadius.md,
+                animation: 'fadeIn 0.3s ease forwards',
               }}
             >
-              {error}
-            </p>
+              <p
+                style={{
+                  color: '#dc2626',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  margin: 0,
+                  textAlign: 'center',
+                }}
+              >
+                {error}
+              </p>
+            </div>
           )}
 
           <div
             style={{
               display: 'flex',
-              gap: '15px',
+              gap: spacing.md,
               justifyContent: 'center',
             }}
           >
-            <button
+            <Button
               onClick={() => {
                 setView('main');
                 setFamilyCode('');
                 setError('');
               }}
-              style={{
-                padding: '15px 30px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                backgroundColor: 'white',
-                color: '#666',
-                border: '2px solid #ddd',
-                borderRadius: '15px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.borderColor = '#999';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.borderColor = '#ddd';
-              }}
+              variant="ghost"
+              size="large"
+              icon="←"
             >
               Back
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={handleEnterCode}
               disabled={loading}
-              style={{
-                padding: '15px 40px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                backgroundColor: colors.primary,
-                color: 'white',
-                border: 'none',
-                borderRadius: '15px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                opacity: loading ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!loading) {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.opacity = '0.9';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.opacity = '1';
-              }}
+              variant="primary"
+              size="large"
             >
-              {loading ? 'Loading...' : 'Continue'}
-            </button>
+              {loading ? <Loading text="" size="small" /> : 'Continue →'}
+            </Button>
           </div>
         </div>
       </div>
@@ -403,24 +446,42 @@ export default function Landing({ onFamilyLoaded }) {
           justifyContent: 'center',
           minHeight: '100vh',
           backgroundColor: colors.background,
-          padding: '40px 20px',
+          padding: spacing.xxl,
+          position: 'relative',
         }}
       >
+        {/* Back Button */}
+        <div style={{ position: 'absolute', top: spacing.lg, left: spacing.lg }}>
+          <Button
+            onClick={() => {
+              setView('main');
+              setNewFamilyCode('');
+              setError('');
+            }}
+            variant="ghost"
+            icon="←"
+          >
+            Back
+          </Button>
+        </div>
+
         <div
           style={{
-            backgroundColor: 'white',
-            borderRadius: '30px',
-            padding: '60px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-            maxWidth: '600px',
+            backgroundColor: colors.white,
+            borderRadius: borderRadius.xl,
+            padding: spacing.xxl,
+            boxShadow: shadows.cardHover,
+            maxWidth: '650px',
             width: '100%',
             textAlign: 'center',
+            animation: 'fadeIn 0.4s ease forwards',
           }}
         >
           <div
             style={{
-              fontSize: '80px',
-              marginBottom: '20px',
+              fontSize: '100px',
+              marginBottom: spacing.lg,
+              animation: 'bounce 1.5s ease-in-out infinite',
             }}
           >
             🎉
@@ -428,10 +489,11 @@ export default function Landing({ onFamilyLoaded }) {
 
           <h2
             style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
+              fontSize: '40px',
+              fontWeight: 800,
               color: colors.primary,
-              marginBottom: '20px',
+              marginBottom: spacing.md,
+              fontFamily: "'Nunito', sans-serif",
             }}
           >
             This is your Family Code!
@@ -440,90 +502,84 @@ export default function Landing({ onFamilyLoaded }) {
           <p
             style={{
               fontSize: '18px',
-              color: '#666',
-              marginBottom: '30px',
+              color: colors.textLight,
+              marginBottom: spacing.xl,
+              fontWeight: 600,
             }}
           >
-            Write it down or remember it! You'll need it to access your family profiles.
+            Write it down or save it! You'll need it to access your family profiles.
           </p>
 
           {/* Family Code Display */}
           <div
             style={{
               backgroundColor: colors.childSpeech,
-              border: '4px solid ' + colors.primary,
-              borderRadius: '20px',
-              padding: '30px',
-              marginBottom: '30px',
+              border: `4px solid ${colors.primary}`,
+              borderRadius: borderRadius.lg,
+              padding: spacing.xl,
+              marginBottom: spacing.lg,
+              animation: 'pulse 2s ease-in-out infinite',
             }}
           >
             <div
               style={{
-                fontSize: '48px',
-                fontWeight: 'bold',
+                fontSize: '52px',
+                fontWeight: 800,
                 color: colors.primary,
-                letterSpacing: '2px',
-                fontFamily: "'Courier New', monospace",
+                letterSpacing: '3px',
+                fontFamily: "'Nunito', monospace",
               }}
             >
               {newFamilyCode}
             </div>
           </div>
 
-          <button
-            onClick={copyToClipboard}
-            style={{
-              padding: '12px 24px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              backgroundColor: '#f3f4f6',
-              color: '#666',
-              border: '2px solid #ddd',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              marginBottom: '30px',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#e5e7eb';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-            }}
-          >
-            📋 Copy Code
-          </button>
+          <div style={{ marginBottom: spacing.lg }}>
+            <Button
+              onClick={copyToClipboard}
+              variant="secondary"
+              size="medium"
+              icon="📋"
+            >
+              Copy Code
+            </Button>
+          </div>
 
-          <button
+          {error && (
+            <div
+              style={{
+                marginBottom: spacing.lg,
+                padding: spacing.md,
+                backgroundColor: '#fee2e2',
+                borderRadius: borderRadius.md,
+                animation: 'fadeIn 0.3s ease forwards',
+              }}
+            >
+              <p
+                style={{
+                  color: '#dc2626',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                {error}
+              </p>
+            </div>
+          )}
+
+          <Button
             onClick={handleContinueWithNewFamily}
             disabled={loading}
+            size="large"
+            fullWidth
+            icon="🚀"
             style={{
-              padding: '20px 50px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              backgroundColor: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: '20px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: loading ? 0.6 : 1,
-              display: 'block',
-              width: '100%',
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.opacity = '0.9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.opacity = '1';
+              background: loading ? colors.primaryGradient : 'linear-gradient(135deg, #10b981 0%, #34d399 100%)',
             }}
           >
-            {loading ? 'Loading...' : "Let's Go!"}
-          </button>
+            {loading ? <Loading text="" size="small" /> : "Let's Go!"}
+          </Button>
         </div>
       </div>
     );

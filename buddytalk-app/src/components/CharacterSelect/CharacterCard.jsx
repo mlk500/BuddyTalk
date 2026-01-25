@@ -1,4 +1,4 @@
-import { colors } from '../../styles/theme';
+import { colors, borderRadius, shadows, animations } from '../../styles/theme';
 
 export default function CharacterCard({ character, onSelect }) {
   const handleClick = () => {
@@ -14,34 +14,36 @@ export default function CharacterCard({ character, onSelect }) {
       onClick={handleClick}
       style={{
         cursor: 'pointer',
-        borderRadius: '30px',
+        borderRadius: borderRadius.xl,
         overflow: 'hidden',
-        backgroundColor: 'white',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
-        transition: 'all 0.3s ease',
+        backgroundColor: colors.white,
+        boxShadow: shadows.card,
+        transition: animations.transition,
         width: '100%',
         maxWidth: '400px',
         position: 'relative',
         opacity: character.available ? 1 : 0.6,
+        filter: character.available ? 'none' : 'grayscale(50%)',
+        animation: 'fadeIn 0.4s ease forwards',
       }}
       onMouseEnter={(e) => {
         if (character.available) {
-          e.currentTarget.style.transform = 'scale(1.05)';
-          e.currentTarget.style.boxShadow = '0 15px 40px rgba(124, 77, 255, 0.3)';
+          e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+          e.currentTarget.style.boxShadow = shadows.cardHover;
         }
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.15)';
+        e.currentTarget.style.transform = 'translateY(0) scale(1)';
+        e.currentTarget.style.boxShadow = shadows.card;
       }}
       onMouseDown={(e) => {
         if (character.available) {
-          e.currentTarget.style.transform = 'scale(0.98)';
+          e.currentTarget.style.transform = animations.scaleOnTap;
         }
       }}
       onMouseUp={(e) => {
         if (character.available) {
-          e.currentTarget.style.transform = 'scale(1.05)';
+          e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
         }
       }}
     >
@@ -66,23 +68,24 @@ export default function CharacterCard({ character, onSelect }) {
           }}
         />
 
-        {/* Coming Soon Badge */}
+        {/* Coming Soon Ribbon */}
         {!character.available && (
           <div
             style={{
               position: 'absolute',
               top: '20px',
-              right: '20px',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              color: '#666',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              fontSize: '14px',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
+              right: '-35px',
+              backgroundColor: colors.primary,
+              color: colors.white,
+              padding: '6px 40px',
+              transform: 'rotate(45deg)',
+              fontSize: '13px',
+              fontWeight: 700,
+              boxShadow: shadows.button,
+              textAlign: 'center',
             }}
           >
-            Coming Soon!
+            Coming Soon
           </div>
         )}
       </div>
@@ -92,15 +95,16 @@ export default function CharacterCard({ character, onSelect }) {
         style={{
           padding: '20px',
           textAlign: 'center',
-          backgroundColor: 'white',
+          backgroundColor: colors.white,
         }}
       >
         <h3
           style={{
             fontSize: '24px',
-            fontWeight: 'bold',
+            fontWeight: 800,
             color: colors.primary,
             margin: 0,
+            fontFamily: "'Nunito', sans-serif",
           }}
         >
           {character.emoji} {character.name}

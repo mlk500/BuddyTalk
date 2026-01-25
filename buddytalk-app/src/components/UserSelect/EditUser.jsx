@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { colors } from '../../styles/theme';
-import { updateProfile } from '../../services/database';
+import { colors, borderRadius, shadows, spacing } from '../../styles/theme';
+import { updateProfile, deleteProfile } from '../../services/database';
+import Button from '../shared/Button';
 
 const AVATAR_OPTIONS = ['👧', '👦', '🧒', '👶', '🧑', '👨', '👩', '🧔', '👱', '🧓', '👴', '👵'];
 
@@ -9,6 +10,7 @@ export default function EditUser({ user, onComplete, onCancel }) {
   const [age, setAge] = useState(user.age.toString());
   const [selectedAvatar, setSelectedAvatar] = useState(user.avatar_url || '👧');
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = async () => {
     if (!name.trim() || !age.trim()) {
@@ -37,6 +39,19 @@ export default function EditUser({ user, onComplete, onCancel }) {
     }
   };
 
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      await deleteProfile(user.id);
+      onComplete(null); // Signal deletion completed
+    } catch (error) {
+      console.error('Error deleting profile:', error);
+      alert('Error deleting profile. Please try again.');
+      setLoading(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
     <div
       style={{
@@ -46,7 +61,8 @@ export default function EditUser({ user, onComplete, onCancel }) {
         justifyContent: 'center',
         minHeight: '100vh',
         backgroundColor: colors.background,
-        padding: '40px 20px',
+        padding: spacing.xxl,
+        position: 'relative',
       }}
     >
       <div
@@ -204,65 +220,126 @@ export default function EditUser({ user, onComplete, onCancel }) {
         <div
           style={{
             display: 'flex',
-            gap: '15px',
+            gap: spacing.md,
             justifyContent: 'center',
+            marginBottom: spacing.lg,
           }}
         >
-          <button
-            onClick={onCancel}
-            style={{
-              padding: '15px 40px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              backgroundColor: 'white',
-              color: '#666',
-              border: '2px solid #ddd',
-              borderRadius: '15px',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.borderColor = '#999';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.borderColor = '#ddd';
-            }}
-          >
+          <Button onClick={onCancel} variant="ghost" size="large">
             Cancel
-          </button>
+          </Button>
 
-          <button
-            onClick={handleSave}
-            disabled={loading}
+          <Button onClick={handleSave} disabled={loading} variant="primary" size="large">
+            {loading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
+
+        {/* Delete Button */}
+        <div style={{ textAlign: 'center', paddingTop: spacing.lg, borderTop: '1px solid #eee' }}>
+          <Button
+            onClick={() => setShowDeleteConfirm(true)}
+            variant="ghost"
+            size="medium"
+            icon="🗑️"
             style={{
-              padding: '15px 40px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              backgroundColor: colors.primary,
-              color: 'white',
-              border: 'none',
-              borderRadius: '15px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s ease',
-              opacity: loading ? 0.6 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.opacity = '0.9';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.opacity = '1';
+              color: '#dc2626',
+              borderColor: '#dc2626',
             }}
           >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
+            Delete Profile
+          </Button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            animation: 'fadeIn 0.2s ease',
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: borderRadius.xl,
+              padding: spacing.xxl,
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: shadows.cardHover,
+              animation: 'fadeIn 0.3s ease forwards',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: '60px', textAlign: 'center', marginBottom: spacing.md }}>
+              ⚠️
+            </div>
+
+            <h3
+              style={{
+                fontSize: '28px',
+                fontWeight: 800,
+                color: '#dc2626',
+                marginBottom: spacing.md,
+                textAlign: 'center',
+                fontFamily: "'Nunito', sans-serif",
+              }}
+            >
+              Delete Profile?
+            </h3>
+
+            <p
+              style={{
+                fontSize: '18px',
+                color: colors.textLight,
+                textAlign: 'center',
+                marginBottom: spacing.xl,
+                lineHeight: 1.5,
+              }}
+            >
+              Are you sure you want to delete <strong>{user.name}'s</strong> profile? This will permanently delete all their chats, messages, and memories. This cannot be undone.
+            </p>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: spacing.md,
+                justifyContent: 'center',
+              }}
+            >
+              <Button
+                onClick={() => setShowDeleteConfirm(false)}
+                variant="ghost"
+                size="large"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={handleDelete}
+                disabled={loading}
+                size="large"
+                icon="🗑️"
+                style={{
+                  background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+                }}
+              >
+                {loading ? 'Deleting...' : 'Yes, Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
