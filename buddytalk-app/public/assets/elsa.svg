@@ -1,8 +1,0 @@
-<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="400" fill="#F0F9FF"/>
-  <circle cx="200" cy="150" r="80" fill="#FEF9C3"/>
-  <circle cx="180" cy="140" r="15" fill="#000"/>
-  <circle cx="220" cy="140" r="15" fill="#000"/>
-  <path d="M 160 180 Q 200 200 240 180" stroke="#000" stroke-width="3" fill="none"/>
-  <text x="200" y="320" font-size="40" font-weight="bold" text-anchor="middle" fill="#7C4DFF">Elsa</text>
-</svg>

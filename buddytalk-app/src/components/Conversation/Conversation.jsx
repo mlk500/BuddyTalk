@@ -280,12 +280,14 @@ export default function Conversation({ character, profile, chat, onExit }) {
           // Play cached audio
           const audioUrl = URL.createObjectURL(audioBlob);
           const audioElement = new Audio(audioUrl);
+          currentAudioRef.current = audioElement; // Track greeting audio
 
           audioElement.onplay = () => setStatus('speaking');
           audioElement.onended = () => {
             setStatus('idle');
             URL.revokeObjectURL(audioUrl);
             setLipSyncVideoUrl(null);
+            currentAudioRef.current = null;
           };
 
           await audioElement.play();

@@ -210,6 +210,9 @@ Respond with ONLY one word: NEEDS_SUPPORT or DOING_WELL`;
 export function buildConversationContext(character, profile, memories) {
   let context = getSystemPrompt(character);
 
+  // Add child's basic info
+  context += `\n\nYou are talking to ${profile.name}, who is ${profile.age} years old.`;
+
   // Add memories if available
   if (memories.length > 0) {
     context += `\n\nYou remember these things about ${profile.name} from previous conversations:\n`;

@@ -384,9 +384,12 @@ Return only one word: needs_support OR doing_well`;
 export function buildConversationContext(character, profile, memories) {
   let enhancedPrompt = getSystemPrompt(character);
 
+  // Add child's basic info
+  enhancedPrompt += `\n\nYou are talking to ${profile.name}, who is ${profile.age} years old.`;
+
   // Add memories if available
   if (memories && memories.length > 0) {
-    enhancedPrompt += `\n\nThings you remember about ${profile.name}:\n`;
+    enhancedPrompt += `\n\nThings you remember about ${profile.name} from previous conversations:\n`;
     memories.forEach(fact => {
       enhancedPrompt += `- ${fact}\n`;
     });
@@ -401,7 +404,7 @@ export function buildConversationContext(character, profile, memories) {
 - Ask yes/no questions more often
 - Repeat key words to help them learn
 - Be extra encouraging and patient`;
-  } else {
+  } else if (profile.english_level === 'doing_well') {
     enhancedPrompt += `\n\n${profile.name} is doing well with English. Feel free to:
 - Use varied vocabulary
 - Ask open-ended questions

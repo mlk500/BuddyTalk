@@ -1,19 +1,39 @@
 /**
  * Character configuration
- * Import from root characters.json for centralized config
+ * Dynamically imported from wav2lip-backend/characters/characters.json
  */
-import charactersData from '../../../characters.json';
+import backendCharactersData from '../../../wav2lip-backend/characters/characters.json';
 
-// Transform the data to add legacy fields for backward compatibility
-export const characters = charactersData.characters.map(char => ({
-  ...char,
-  // Add backward-compatible fields
-  image: char.assets.cardImage,
+// Transform backend data to frontend format
+export const characters = Object.entries(backendCharactersData).map(([id, char]) => ({
+  id,
+  name: char.name,
+  emoji: char.emoji,
+  available: char.available,
+  image: char.card_image ? `/assets/${char.card_image}` : null,
   expressions: {
-    neutral: char.assets.cardImage,
-    talking: char.assets.cardImage,
-    happy: char.assets.cardImage,
+    neutral: char.card_image ? `/assets/${char.card_image}` : null,
+    talking: char.card_image ? `/assets/${char.card_image}` : null,
+    happy: char.card_image ? `/assets/${char.card_image}` : null,
   },
+  fishAudio: {
+    modelId: char.fish_audio_model_id,
+  },
+  assets: {
+    cardImage: char.card_image ? `/assets/${char.card_image}` : null,
+    lipSyncImage: char.media_file,
+    idleAnimation: char.idle_media,
+    prerecordedGoodbye: char.available ? {
+      audio: `/prerecorded/${id}/${id}-bye.mp3`,
+      video: `/prerecorded/${id}/${id}-goodbye.mp4`,
+    } : null,
+  },
+  voiceConfig: {
+    pitch: char.voice_pitch || 1.0,
+    rate: char.voice_rate || 1.0,
+  },
+  personality: char.personality,
+  greeting: char.greeting,
 }));
 
 // Helper to get character by ID
