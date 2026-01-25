@@ -45,13 +45,25 @@ export default function useAudio(voiceConfig = {}) {
       setTranscript(fullTranscript);
 
       if (finalText && onSpeechResultCallbackRef.current) {
-        onSpeechResultCallbackRef.current(finalText);
+        // Wait 800ms after final result to catch stuttering/incomplete sentences
+        setTimeout(() => {
+          onSpeechResultCallbackRef.current(finalText);
+        }, 800);
       }
     };
 
     recognition.onerror = (e) => {
-      setError(`Speech recognition error: ${e.error}`);
-      setIsListening(false);
+      console.error('Speech recognition error:', e.error);
+
+      // Auto-retry on no-speech error (common when user hasn't spoken yet)
+      if (e.error === 'no-speech') {
+        console.log('No speech detected, will retry...');
+        setIsListening(false);
+        // Don't set error for no-speech, just quietly retry
+      } else {
+        setError(`Speech recognition error: ${e.error}`);
+        setIsListening(false);
+      }
     };
 
     recognition.onend = () => {

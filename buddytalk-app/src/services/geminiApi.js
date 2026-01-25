@@ -10,7 +10,7 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || DEFAULT_MODEL;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent`;
 
-export async function getCharacterResponse(character, conversationHistory) {
+export async function getCharacterResponse(character, conversationHistory, systemPromptOverride = null) {
   if (!GEMINI_API_KEY) {
     console.warn('VITE_GEMINI_API_KEY not found in environment variables');
     console.log('Using fallback response for testing');
@@ -21,7 +21,7 @@ export async function getCharacterResponse(character, conversationHistory) {
 
   try {
     // Convert conversation history to Gemini format
-    const systemPrompt = getSystemPrompt(character);
+    const systemPrompt = systemPromptOverride || getSystemPrompt(character);
 
     // Build Gemini messages format - prepend system prompt as first user message
     const geminiMessages = [

@@ -1,6 +1,6 @@
 import { colors } from '../../styles/theme';
 
-export default function Controls({ isListening, onExit }) {
+export default function Controls({ isListening, isMuted, onToggleMute, onExit }) {
   return (
     <div
       style={{
@@ -8,7 +8,7 @@ export default function Controls({ isListening, onExit }) {
         top: '30px',
         right: '30px',
         display: 'flex',
-        gap: '20px',
+        gap: '15px',
         alignItems: 'center',
         zIndex: 100,
       }}
@@ -45,6 +45,41 @@ export default function Controls({ isListening, onExit }) {
         </div>
       )}
 
+      {/* Mute/Unmute Button */}
+      <button
+        onClick={onToggleMute}
+        style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          border: 'none',
+          backgroundColor: isMuted ? '#ef4444' : 'white',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '28px',
+          boxShadow: '0 5px 20px rgba(0, 0, 0, 0.15)',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.transform = 'scale(0.95)';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }}
+        title={isMuted ? 'Unmute' : 'Mute'}
+      >
+        {isMuted ? '🔇' : '🔊'}
+      </button>
+
+      {/* Exit Button */}
       <button
         onClick={onExit}
         style={{
@@ -75,8 +110,9 @@ export default function Controls({ isListening, onExit }) {
         onMouseUp={(e) => {
           e.currentTarget.style.transform = 'scale(1.1)';
         }}
+        title="Say goodbye and leave"
       >
-        ✕
+        👋
       </button>
     </div>
   );
