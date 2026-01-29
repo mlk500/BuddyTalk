@@ -317,44 +317,48 @@ export default function Conversation({ character, profile, chat, onExit }) {
       const greeting = character.greeting;
       addMessage('assistant', greeting);
 
-      // Try to use cached greeting audio and video first
+      // Try to use cached greeting audio and video first (only in local mode with backend)
       try {
-        const greetingAudioUrl = `/api/characters/${character.id}/greeting-audio`;
-        const greetingVideoUrl = `/api/characters/${character.id}/greeting-video`;
+        // Skip cached greeting attempt in deployed mode (no backend)
+        if (isLipSyncEnabled) {
+          const greetingAudioUrl = `/api/characters/${character.id}/greeting-audio`;
+          const greetingVideoUrl = `/api/characters/${character.id}/greeting-video`;
 
-        const [audioResponse, videoResponse] = await Promise.all([
-          fetch(greetingAudioUrl),
-          fetch(greetingVideoUrl)
-        ]);
+          const [audioResponse, videoResponse] = await Promise.all([
+            fetch(greetingAudioUrl),
+            fetch(greetingVideoUrl)
+          ]);
 
-        if (audioResponse.ok && videoResponse.ok) {
-          console.log('✅ Using cached greeting audio and video');
-          const audioBlob = await audioResponse.blob();
-          const videoBlob = await videoResponse.blob();
+          if (audioResponse.ok && videoResponse.ok) {
+            console.log('✅ Using cached greeting audio and video');
+            const audioBlob = await audioResponse.blob();
+            const videoBlob = await videoResponse.blob();
 
-          // Use cached video URL
-          const cachedVideoUrl = URL.createObjectURL(videoBlob);
-          setLipSyncVideoUrl(cachedVideoUrl);
+            // Use cached video URL
+            const cachedVideoUrl = URL.createObjectURL(videoBlob);
+            setLipSyncVideoUrl(cachedVideoUrl);
 
-          // Play cached audio
-          const audioUrl = URL.createObjectURL(audioBlob);
-          const audioElement = new Audio(audioUrl);
-          currentAudioRef.current = audioElement; // Track greeting audio
+            // Play cached audio
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioElement = new Audio(audioUrl);
+            currentAudioRef.current = audioElement; // Track greeting audio
 
-          audioElement.onplay = () => setStatus('speaking');
-          audioElement.onended = () => {
-            setStatus('idle');
-            URL.revokeObjectURL(audioUrl);
-            setLipSyncVideoUrl(null);
-            currentAudioRef.current = null;
-          };
+            audioElement.onplay = () => setStatus('speaking');
+            audioElement.onended = () => {
+              setStatus('idle');
+              URL.revokeObjectURL(audioUrl);
+              setLipSyncVideoUrl(null);
+              currentAudioRef.current = null;
+            };
 
-          await audioElement.play();
-        } else {
-          throw new Error('Cached greeting not available');
+            await audioElement.play();
+            return; // Successfully used cached greeting
+          }
         }
+
+        throw new Error('Cached greeting not available or in deployed mode');
       } catch (error) {
-        console.log('Cached greeting not available, generating new:', error);
+        console.log('Generating new greeting...');
         // Fallback to generating new greeting
         if (isFishAudioConfigured(character.fishAudio?.modelId)) {
           // Choose mode: lip-sync (local) or audio-only (deployed)
@@ -544,7 +548,7 @@ export default function Conversation({ character, profile, chat, onExit }) {
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         onExit={handleExitClick}
-        onRetry={status === 'idle' ? audio.startListening : null}
+        onRetry={status !== 'speaking' && status !== 'processing' && !isGeneratingVideo ? audio.startListening : null}
         transcript={audio.transcript}
       />
 
