@@ -11,7 +11,6 @@
 - The deployed version uses **audio-only mode** (no lip-sync video)
 - Uses **browser's Web Speech API** for speech-to-text and text-to-speech
   - Voice recognition may occasionally have accuracy issues
-  - Works best in Chrome/Edge browsers
   - Requires microphone permissions
 - For the **full experience with lip-sync video**, run locally (see setup instructions below)
 
