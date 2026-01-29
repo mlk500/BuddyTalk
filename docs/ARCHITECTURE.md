@@ -1,381 +1,292 @@
 # BuddyTalk Architecture
 
-This document explains the technical architecture and design decisions behind BuddyTalk.
+Technical architecture and design decisions behind BuddyTalk.
 
-## Overview
+## System Overview
 
-BuddyTalk is a client-side React application that orchestrates three main technologies:
+BuddyTalk is a React application that orchestrates:
+
 1. **Web Speech API** for voice input/output
-2. **Claude API** for conversational intelligence
-3. **React** for UI state management
+2. **OpenRouter** for conversational AI (LLM)
+3. **Fish Audio** for character voice synthesis
+4. **Wav2Lip** for lip-sync video generation (local mode)
+5. **Supabase** for data persistence
 
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                         Browser                              │
+│                      Browser (React App)                     │
 │                                                               │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              React Application                       │   │
-│  │                                                       │   │
-│  │  ┌──────────────┐  ┌──────────────┐                │   │
-│  │  │  Character   │  │ Conversation │                │   │
-│  │  │   Select     │→│    Screen    │                │   │
-│  │  └──────────────┘  └──────────────┘                │   │
-│  │                           │                          │   │
-│  │                           ↓                          │   │
-│  │         ┌─────────────────────────────┐             │   │
-│  │         │   useConversation Hook      │             │   │
-│  │         │  (State Management)         │             │   │
-│  │         └─────────────────────────────┘             │   │
-│  │                  ↓              ↓                    │   │
-│  │      ┌──────────────┐  ┌──────────────┐            │   │
-│  │      │  useAudio    │  │  claudeApi   │            │   │
-│  │      │    Hook      │  │   Service    │            │   │
-│  │      └──────────────┘  └──────────────┘            │   │
-│  │            │                    │                    │   │
-│  └────────────│────────────────────│────────────────────┘   │
-│               ↓                    ↓                         │
-│    ┌──────────────────┐   ┌──────────────────┐             │
-│    │  Web Speech API  │   │   Fetch API       │             │
-│    │  (STT/TTS)       │   │   (HTTP Client)   │             │
-│    └──────────────────┘   └──────────────────┘             │
-│               │                    │                         │
-└───────────────│────────────────────│─────────────────────────┘
-                ↓                    ↓
-         ┌─────────────┐    ┌──────────────────┐
-         │  Browser    │    │   Claude API      │
-         │  Audio I/O  │    │  (Anthropic)      │
-         └─────────────┘    └──────────────────┘
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ Character  │→│ Conversation │→│   Dashboard   │        │
+│  │   Select   │  │    Screen    │  │              │        │
+│  └────────────┘  └──────────────┘  └──────────────┘        │
+│                           │                                   │
+│         ┌─────────────────┴─────────────────┐               │
+│         ↓                                     ↓               │
+│  ┌──────────────┐                   ┌──────────────┐        │
+│  │   useAudio   │                   │ OpenRouter   │        │
+│  │     Hook     │                   │   API        │        │
+│  └──────────────┘                   └──────────────┘        │
+│         │                                     │               │
+│  ┌──────────────┐                   ┌──────────────┐        │
+│  │  Web Speech  │                   │   Supabase   │        │
+│  │     API      │                   │   Database   │        │
+│  └──────────────┘                   └──────────────┘        │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+                    ↓                          ↓
+          ┌──────────────────┐       ┌──────────────────┐
+          │   Fish Audio     │       │   Wav2Lip API    │
+          │   TTS Service    │       │   (Local Mode)   │
+          └──────────────────┘       └──────────────────┘
 ```
 
 ## Core Components
 
-### 1. App Component (`src/App.jsx`)
-**Role:** Root application orchestrator
+### App (`src/App.jsx`)
 
-**Responsibilities:**
-- Manage global app state (which screen to show)
-- Handle character selection
-- Navigate between CharacterSelect and Conversation screens
+Root application orchestrator managing navigation between screens.
 
-**State:**
-```javascript
-selectedCharacter: Character | null
-```
+### CharacterSelect (`src/components/CharacterSelect/`)
 
-### 2. CharacterSelect (`src/components/CharacterSelect/`)
-
-**Components:**
-- `CharacterSelect.jsx` - Main screen container
-- `CharacterCard.jsx` - Individual character card
-
-**Responsibilities:**
 - Display available characters
 - Handle character selection
-- Provide visual feedback on hover/click
+- Visual feedback on hover/click
 
-**Props:**
-```javascript
-onCharacterSelect: (character: Character) => void
-```
+### Conversation (`src/components/Conversation/`)
 
-### 3. Conversation (`src/components/Conversation/`)
+Components:
 
-**Components:**
 - `Conversation.jsx` - Main conversation orchestrator
 - `Avatar.jsx` - Animated character display
-- `Controls.jsx` - Exit button and mic indicator
+- `Controls.jsx` - UI controls (mic, mute, exit)
 
-**Responsibilities:**
+Responsibilities:
+
 - Manage conversation flow and state
-- Coordinate between audio input/output and API calls
-- Handle conversation lifecycle (greeting → conversation → goodbye)
+- Coordinate audio input/output with API calls
+- Handle conversation lifecycle
 
-**Props:**
-```javascript
-character: Character
-onExit: () => void
-```
+### Dashboard (`src/components/Dashboard/`)
+
+Parent dashboard for viewing:
+
+- Family profiles
+- Conversation history
+- Memories and progress
 
 ## Custom Hooks
 
 ### useAudio (`src/hooks/useAudio.js`)
 
-**Purpose:** Encapsulate all Web Speech API interactions
+Encapsulates Web Speech API interactions.
 
-**Returns:**
+Returns:
+
 ```javascript
 {
   isListening: boolean,
   isSpeaking: boolean,
   transcript: string,
-  error: string | null,
   startListening: () => Promise<void>,
-  stopListening: () => void,
-  onSpeechResult: (callback) => void,
   speak: (text, onComplete?) => void,
   stopSpeaking: () => void
 }
 ```
 
-**Key Implementation Details:**
-- Uses `SpeechRecognition` for STT
-- Uses `SpeechSynthesis` for TTS
-- Manages microphone permissions
-- Handles voice selection and configuration
-- Provides callback mechanism for final transcripts
+### useConversationWithDB (`src/hooks/useConversationWithDB.js`)
 
-### useConversation (`src/hooks/useConversation.js`)
+Manages conversation state with database persistence.
 
-**Purpose:** Manage conversation state and history
+State Machine:
 
-**Returns:**
-```javascript
-{
-  status: 'idle' | 'listening' | 'processing' | 'speaking',
-  messages: Message[],
-  character: Character,
-  setStatus: (status) => void,
-  addMessage: (role, content) => void,
-  reset: () => void
-}
-```
-
-**State Machine:**
 ```
 idle → listening → processing → speaking → idle
-  ↑                                           ↓
-  └───────────────────────────────────────────┘
 ```
 
 ## Services
 
-### claudeApi (`src/services/claudeApi.js`)
+### openRouterApi (`src/services/openRouterApi.js`)
 
-**Purpose:** Interface with Claude API for conversational responses
+Interface with OpenRouter for:
 
-**Key Function:**
-```javascript
-getCharacterResponse(character, conversationHistory) → Promise<string>
-```
+- Chat responses
+- Title generation
+- Memory extraction
+- English level assessment
 
-**Implementation:**
-- Uses Fetch API to call Claude Messages API
-- Includes system prompt based on character
-- Sends full conversation history for context
-- Implements fallback responses if API unavailable
-- Max tokens: 150 (keeps responses short for children)
+### fishAudioApi (`src/services/fishAudioApi.js`)
 
-## Configuration
+Fish Audio TTS integration for character voices.
+
+### database (`src/services/database.js`)
+
+Supabase CRUD operations for:
+
+- Families
+- Profiles
+- Chats
+- Messages
+- Memories
+
+### wav2lipApi (`src/services/wav2lipApi.js`)
+
+Lip-sync video generation (local mode only).
+
+## Configuration Files
 
 ### characters.js (`src/config/characters.js`)
 
-**Structure:**
+Character definitions:
+
 ```javascript
 {
   id: string,
   name: string,
-  image: string,
-  expressions: {
-    neutral: string,
-    talking: string,
-    happy: string
-  },
-  voiceConfig: {
-    pitch: number,  // 0.0 - 2.0
-    rate: number    // 0.1 - 10.0
-  },
-  personality: string
+  personality: string,
+  greeting: string,
+  fishAudio: { modelId: string },
+  assets: { idleAnimation: string, lipSyncSource: string }
 }
 ```
 
 ### prompts.js (`src/config/prompts.js`)
 
-**Purpose:** Generate system prompts for Claude API
+System prompts for OpenRouter API:
 
-**Key Features:**
 - Character personality integration
 - Recasting instructions
 - Age-appropriate language guidelines
 - Conversation flow guidance
 
-### theme.js (`src/styles/theme.js`)
-
-**Purpose:** Centralized color palette and design tokens
-
 ## Data Flow
 
-### 1. Conversation Initialization
-```
-User clicks character
-  → App sets selectedCharacter
-  → Conversation screen renders
-  → useConversation initializes
-  → Greeting is spoken via useAudio
-  → Status set to 'idle'
-```
+### Conversation Turn
 
-### 2. Conversation Turn
 ```
 Status: idle
-  → Auto-start listening (1s delay)
+  → Auto-start listening
   → Status: listening
-  → useAudio.startListening()
   → Child speaks
-  → Speech Recognition processes
-  → Final transcript callback fires
+  → Speech recognition processes
   → Status: processing
-  → claudeApi.getCharacterResponse()
-  → Response received
+  → OpenRouter API generates response
   → Status: speaking
-  → useAudio.speak(response)
-  → TTS completes
+  → Fish Audio TTS plays
   → Status: idle
-  → Loop continues
 ```
 
-### 3. Exit Flow
+### Database Persistence
+
 ```
-Child says "bye" OR clicks X button
-  → Character speaks goodbye
-  → After TTS completes, call onExit
-  → App sets selectedCharacter = null
-  → Return to CharacterSelect
+Message sent
+  → Save to Supabase (messages table)
+  → Extract memories (if applicable)
+  → Update English level (after 5+ turns)
+  → Save to profile
 ```
 
 ## Key Design Decisions
 
-### 1. No Text UI for Children
-**Decision:** All child-facing UI is visual/audio only
+### Voice-First Interface
 
-**Rationale:** Target age (3-8) has limited reading ability
-
-**Implementation:**
+- No reading or typing required
 - Large tap targets
-- Icon-only buttons
-- Character animations for feedback
-- Status indicators are for debugging only
+- Icon-only buttons for children
+- Visual feedback for all actions
 
-### 2. Automatic Conversation Flow
-**Decision:** Auto-start listening when idle, no manual mic button
+### Automatic Conversation Flow
 
-**Rationale:** Reduces cognitive load for young children
+- Auto-start listening when idle
+- No manual mic button needed
+- Reduces cognitive load for children
 
-**Implementation:**
-- 1-second delay before auto-listening
-- Visual indicator shows when listening
-- Smooth state transitions
+### Recasting via Prompt Engineering
 
-### 3. Client-Side Only
-**Decision:** No backend server, all processing in browser
+- Grammar correction in system prompt
+- Leverages LLM's language understanding
+- Natural, contextually appropriate corrections
 
-**Rationale:**
-- Simpler deployment
-- Lower latency for voice I/O
-- Reduced infrastructure costs
+### Deployment Modes
 
-**Trade-offs:**
-- API key exposed (acceptable for prototype)
-- No conversation persistence
-- Browser compatibility requirements
+**Audio-Only (Vercel)**:
 
-### 4. Recasting via Prompt Engineering
-**Decision:** Implement grammar correction in system prompt, not post-processing
+- Static GIF avatars
+- No backend required
+- Serverless functions for APIs
 
-**Rationale:**
-- Leverages Claude's language understanding
-- More natural corrections
-- Contextually appropriate
+**Full Mode (Local)**:
 
-**Implementation:**
-- System prompt includes recasting examples
-- Claude naturally incorporates corrections in responses
-- No separate grammar analysis needed
+- Lip-sync video generation
+- Requires GPU backend
+- Enhanced visual experience
 
-### 5. Inline Styling
-**Decision:** Use inline styles instead of CSS modules
+## Database Schema
 
-**Rationale:**
-- Component encapsulation
-- Dynamic theme-based styles
-- Simpler for small project
+### Families
 
-**Trade-offs:**
-- Less CSS caching
-- Some duplication
-- Harder to optimize bundle size
+```sql
+id UUID PRIMARY KEY
+family_code TEXT UNIQUE
+created_at TIMESTAMP
+```
+
+### Profiles
+
+```sql
+id UUID PRIMARY KEY
+family_id UUID REFERENCES families
+name TEXT
+age INTEGER
+english_level TEXT
+```
+
+### Chats
+
+```sql
+id UUID PRIMARY KEY
+profile_id UUID REFERENCES profiles
+character_id TEXT
+title TEXT
+```
+
+### Messages
+
+```sql
+id UUID PRIMARY KEY
+chat_id UUID REFERENCES chats
+role TEXT ('user' | 'assistant')
+content TEXT
+```
+
+### Memories
+
+```sql
+id UUID PRIMARY KEY
+profile_id UUID REFERENCES profiles
+fact TEXT
+```
 
 ## Performance Considerations
 
-### Voice Processing
 - Speech Recognition runs locally (no API latency)
-- TTS uses browser's native engine (fast)
-- Microphone permission requested only once
-
-### API Calls
-- Conversation history sent each time (context)
-- Max 150 tokens keeps responses fast
-- Fallback responses if API fails
-
-### Asset Loading
-- SVG images load quickly
-- No video/heavy assets
-- Minimal bundle size
+- TTS uses Fish Audio (high quality, low latency)
+- Database queries optimized with indexes
+- Assets cached in browser
+- Serverless functions scale automatically
 
 ## Browser Compatibility
 
-### Required Features
-- Web Speech API (SpeechRecognition)
-- Web Speech API (SpeechSynthesis)
+**Required Features:**
+
+- Web Speech API (SpeechRecognition & SpeechSynthesis)
 - ES6+ JavaScript
 - Fetch API
-- CSS Flexbox/Grid
 
-### Tested Browsers
-- Chrome/Edge: Full support ✅
+**Tested Browsers:**
+
+- Chrome/Safari: Full support ✅
 - Safari: Partial (limited voice selection)
 - Firefox: Limited (STT may not work)
-
-## Security Considerations
-
-### API Key Exposure
-**Risk:** Claude API key in client-side code
-
-**Mitigation:**
-- Environment variable (not committed)
-- Rate limiting on API key
-- Low-risk use case (prototype)
-
-**Production Solution:**
-- Implement backend proxy
-- Server-side API key storage
-- Request authentication
-
-### Microphone Access
-**Risk:** Microphone permission required
-
-**Mitigation:**
-- Browser permission prompts
-- Clear user indication when listening
-- No recording/storage of audio
-
-## Future Enhancements
-
-### Short Term
-- [ ] Add talking avatar integration (SadTalker/D-ID)
-- [ ] Implement conversation analytics
-- [ ] Add parent dashboard
-- [ ] Support for multiple languages
-
-### Medium Term
-- [ ] Backend API for conversation storage
-- [ ] Progress tracking and learning metrics
-- [ ] More characters and customization
-- [ ] Mobile app (React Native port)
-
-### Long Term
-- [ ] Adaptive difficulty based on child's level
-- [ ] Multiplayer conversations
-- [ ] Gamification and rewards
-- [ ] Teacher/educator portal
