@@ -314,65 +314,24 @@ export default function Conversation({ character, profile, chat, onExit }) {
         return;
       }
 
-      const greeting = character.greeting;
-      addMessage('assistant', greeting);
+      // Personalize greeting with child's name
+      const personalizedGreeting = character.greeting.replace(/little friend|there|sweetie|pal/i, profile.name);
+      addMessage('assistant', personalizedGreeting);
 
-      // Try to use cached greeting audio and video first (only in local mode with backend)
-      try {
-        // Skip cached greeting attempt in deployed mode (no backend)
+      // Always generate new greeting with Fish Audio (no prerecorded audio)
+      console.log('Generating personalized greeting with Fish Audio...');
+      if (isFishAudioConfigured(character.fishAudio?.modelId)) {
+        // Choose mode: lip-sync (local) or audio-only (deployed)
         if (isLipSyncEnabled) {
-          const greetingAudioUrl = `/api/characters/${character.id}/greeting-audio`;
-          const greetingVideoUrl = `/api/characters/${character.id}/greeting-video`;
-
-          const [audioResponse, videoResponse] = await Promise.all([
-            fetch(greetingAudioUrl),
-            fetch(greetingVideoUrl)
-          ]);
-
-          if (audioResponse.ok && videoResponse.ok) {
-            console.log('✅ Using cached greeting audio and video');
-            const audioBlob = await audioResponse.blob();
-            const videoBlob = await videoResponse.blob();
-
-            // Use cached video URL
-            const cachedVideoUrl = URL.createObjectURL(videoBlob);
-            setLipSyncVideoUrl(cachedVideoUrl);
-
-            // Play cached audio
-            const audioUrl = URL.createObjectURL(audioBlob);
-            const audioElement = new Audio(audioUrl);
-            currentAudioRef.current = audioElement; // Track greeting audio
-
-            audioElement.onplay = () => setStatus('speaking');
-            audioElement.onended = () => {
-              setStatus('idle');
-              URL.revokeObjectURL(audioUrl);
-              setLipSyncVideoUrl(null);
-              currentAudioRef.current = null;
-            };
-
-            await audioElement.play();
-            return; // Successfully used cached greeting
-          }
-        }
-
-        throw new Error('Cached greeting not available or in deployed mode');
-      } catch (error) {
-        console.log('Generating new greeting...');
-        // Fallback to generating new greeting
-        if (isFishAudioConfigured(character.fishAudio?.modelId)) {
-          // Choose mode: lip-sync (local) or audio-only (deployed)
-          if (isLipSyncEnabled) {
-            await speakWithLipSync(greeting);
-          } else {
-            await speakAudioOnly(greeting);
-          }
+          await speakWithLipSync(personalizedGreeting);
         } else {
-          setStatus('speaking');
-          audio.speak(greeting, () => {
-            setStatus('idle');
-          });
+          await speakAudioOnly(personalizedGreeting);
         }
+      } else {
+        setStatus('speaking');
+        audio.speak(personalizedGreeting, () => {
+          setStatus('idle');
+        });
       }
     };
 

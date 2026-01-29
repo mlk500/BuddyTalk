@@ -213,7 +213,8 @@ export function getModelInfo() {
  * @returns {Promise<string>} Generated response
  */
 async function callOpenRouterUtility(prompt, maxTokens = 200, retryCount = 0) {
-  if (!OPENROUTER_API_KEY) {
+  // In deployed mode, API key is handled by Vercel function
+  if (!IS_DEPLOYED && !OPENROUTER_API_KEY) {
     throw new Error('OpenRouter API key not configured');
   }
 
@@ -235,15 +236,26 @@ async function callOpenRouterUtility(prompt, maxTokens = 200, retryCount = 0) {
     max_tokens: maxTokens,
   };
 
+  // Choose endpoint based on deployment mode
+  const endpoint = IS_DEPLOYED
+    ? '/api/chat'  // Vercel serverless function
+    : 'https://openrouter.ai/api/v1/chat/completions';  // Direct API call
+
+  // Build headers based on mode
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  if (!IS_DEPLOYED) {
+    headers['Authorization'] = `Bearer ${OPENROUTER_API_KEY}`;
+    headers['HTTP-Referer'] = 'https://buddytalk.app';
+    headers['X-Title'] = 'BuddyTalk';
+  }
+
   try {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch(endpoint, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://buddytalk.app',
-        'X-Title': 'BuddyTalk',
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -402,7 +414,7 @@ Return only one word: needs_support OR doing_well`;
  * @returns {string} Enhanced system prompt
  */
 export function buildConversationContext(character, profile, memories) {
-  let enhancedPrompt = getSystemPrompt(character);
+  let enhancedPrompt = getSystemPrompt(character, profile.name);
 
   // Add child's basic info
   enhancedPrompt += `\n\nYou are talking to ${profile.name}, who is ${profile.age} years old.`;
