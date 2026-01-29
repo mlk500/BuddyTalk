@@ -19,6 +19,9 @@ export default function Conversation({ character, profile, chat, onExit }) {
   const currentAudioRef = useRef(null);
   const isExitingRef = useRef(false); // Prevent double-click on exit
 
+  // Check if lip-sync is enabled (false for Vercel deployment)
+  const isLipSyncEnabled = import.meta.env.VITE_ENABLE_LIPSYNC !== 'false';
+
   const { status, messages, setStatus, addMessage, memories, extractAndSaveMemories } =
     useConversationWithDB(character, profile, chat);
   const audio = useAudio(character.voiceConfig);
@@ -31,6 +34,57 @@ export default function Conversation({ character, profile, chat, onExit }) {
       }
     };
   }, [lipSyncVideoUrl]);
+
+  // Audio-only mode (for deployment without backend)
+  const speakAudioOnly = useCallback(
+    async (text) => {
+      try {
+        setIsGeneratingVideo(true);
+
+        // Generate speech with Fish Audio
+        console.log('🎤 Generating speech with Fish Audio TTS (audio-only mode)...');
+        const audioBlob = await generateSpeech(text, { modelId: character.fishAudio?.modelId });
+
+        setIsGeneratingVideo(false);
+
+        // Create audio from blob and play it
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audioElement = new Audio(audioUrl);
+        currentAudioRef.current = audioElement;
+
+        audioElement.onplay = () => {
+          setStatus('speaking');
+        };
+
+        audioElement.onended = () => {
+          console.log('Audio playback ended');
+          setStatus('idle');
+          URL.revokeObjectURL(audioUrl);
+          currentAudioRef.current = null;
+        };
+
+        audioElement.onerror = (e) => {
+          console.error('Audio playback error:', e);
+          setStatus('idle');
+          URL.revokeObjectURL(audioUrl);
+          currentAudioRef.current = null;
+        };
+
+        if (!isMuted) {
+          await audioElement.play();
+        } else {
+          setStatus('idle');
+        }
+      } catch (error) {
+        console.error('Error in speakAudioOnly:', error);
+        setIsGeneratingVideo(false);
+        setStatus('idle');
+        // Fallback to browser TTS if Fish Audio fails
+        audio.speak(text, () => setStatus('idle'));
+      }
+    },
+    [character.fishAudio?.modelId, audio, setStatus, isMuted]
+  );
 
   // Generate speech and lip-sync video
   const speakWithLipSync = useCallback(
@@ -202,7 +256,12 @@ export default function Conversation({ character, profile, chat, onExit }) {
 
         // Use Fish Audio + Wav2Lip if configured, otherwise fallback to browser TTS
         if (isFishAudioConfigured(character.fishAudio?.modelId)) {
-          await speakWithLipSync(response);
+          // Choose mode: lip-sync (local) or audio-only (deployed)
+          if (isLipSyncEnabled) {
+            await speakWithLipSync(response);
+          } else {
+            await speakAudioOnly(response);
+          }
         } else {
           setStatus('speaking');
           audio.speak(response, () => {
@@ -222,7 +281,7 @@ export default function Conversation({ character, profile, chat, onExit }) {
         setStatus('idle');
       }
     },
-    [character, profile, messages, memories, addMessage, setStatus, audio, onExit, speakWithLipSync, handleConversationEnd, isGoodbye, status, isGeneratingVideo]
+    [character, profile, messages, memories, addMessage, setStatus, audio, onExit, speakWithLipSync, speakAudioOnly, isLipSyncEnabled, handleConversationEnd, isGoodbye, status, isGeneratingVideo]
   );
 
   // Stop audio when muting
@@ -298,7 +357,12 @@ export default function Conversation({ character, profile, chat, onExit }) {
         console.log('Cached greeting not available, generating new:', error);
         // Fallback to generating new greeting
         if (isFishAudioConfigured(character.fishAudio?.modelId)) {
-          await speakWithLipSync(greeting);
+          // Choose mode: lip-sync (local) or audio-only (deployed)
+          if (isLipSyncEnabled) {
+            await speakWithLipSync(greeting);
+          } else {
+            await speakAudioOnly(greeting);
+          }
         } else {
           setStatus('speaking');
           audio.speak(greeting, () => {

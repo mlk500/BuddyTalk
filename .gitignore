@@ -16,7 +16,10 @@ ENV/
 .env
 .env.local
 .env.production
+.env.vercel
 *.env
+!.env.example
+!.env.vercel.example
 
 # Build outputs
 dist/

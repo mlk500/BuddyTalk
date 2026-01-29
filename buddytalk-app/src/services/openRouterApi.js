@@ -11,10 +11,15 @@ import { getSystemPrompt } from '../config/prompts';
  * How to switch:
  * 1. Default: FREE models only (no cost, no limits)
  * 2. Set VITE_OPENROUTER_USE_PAID=true for paid model (better quality)
+ *
+ * Deployment modes:
+ * 1. Local mode: API key in browser, calls OpenRouter directly
+ * 2. Deployed mode (Vercel): API key on server, calls /api/chat proxy
  */
 
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 const USE_PAID = import.meta.env.VITE_OPENROUTER_USE_PAID === 'true';
+const IS_DEPLOYED = import.meta.env.VITE_ENABLE_LIPSYNC === 'false';
 
 // Model configurations
 const MODELS = {
@@ -38,7 +43,8 @@ const MODELS = {
  * @returns {Promise<string>} Generated response text
  */
 export async function getCharacterResponse(character, conversationHistory, systemPromptOverride = null) {
-  if (!OPENROUTER_API_KEY) {
+  // In deployed mode, API key is handled by Vercel function
+  if (!IS_DEPLOYED && !OPENROUTER_API_KEY) {
     console.warn('VITE_OPENROUTER_API_KEY not found in environment variables');
     console.log('Using fallback response for testing');
     const childLastMessage = conversationHistory[conversationHistory.length - 1]?.content || '';
@@ -121,14 +127,28 @@ async function callOpenRouter(character, conversationHistory, systemPromptOverri
     top_p: 0.95,
   };
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  // Choose endpoint based on deployment mode
+  const endpoint = IS_DEPLOYED
+    ? '/api/chat'  // Vercel serverless function (API key on server)
+    : 'https://openrouter.ai/api/v1/chat/completions';  // Direct API call (local)
+
+  // Build headers based on mode
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  // Only add authorization for local mode (Vercel function handles it)
+  if (!IS_DEPLOYED) {
+    headers['Authorization'] = `Bearer ${OPENROUTER_API_KEY}`;
+    headers['HTTP-Referer'] = 'https://buddytalk.app';
+    headers['X-Title'] = 'BuddyTalk';
+  }
+
+  console.log(`🤖 Calling OpenRouter via ${IS_DEPLOYED ? 'Vercel proxy' : 'direct API'}`);
+
+  const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-      'HTTP-Referer': 'https://buddytalk.app', // Optional: for rankings
-      'X-Title': 'BuddyTalk', // Optional: for rankings
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(requestBody),
   });
 

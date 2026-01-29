@@ -491,32 +491,101 @@ Supabase connection is configured in `buddytalk-app/src/config/supabase.js`:
 
 ## Deployment
 
-### Frontend Deployment (Vercel/Netlify)
+BuddyTalk supports **two deployment modes**:
 
-1. **Build the app**
+### Option 1: Vercel Deployment (Recommended - FREE)
+
+**Audio-only mode** - No backend needed, uses Vercel serverless functions for TTS and chat.
+
+**Cost**: FREE (Vercel hobby plan)
+
+**Features**:
+- ✅ Voice conversations with characters
+- ✅ All AI chat features
+- ✅ Database persistence
+- ❌ No lip-sync video (shows static character image/GIF)
+
+#### Quick Deploy to Vercel
+
+1. **Connect your GitHub repo to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project" → Import your GitHub repository
+   - Root Directory: `buddytalk-app`
+   - Framework Preset: Vite
+
+2. **Configure Environment Variables**
+
+   Add these in Vercel project settings (Settings → Environment Variables):
+
+   **Frontend Variables (VITE_*):**
    ```bash
-   cd buddytalk-app
-   npm run build
+   VITE_ENABLE_LIPSYNC=false
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-2. **Deploy to Vercel**
+   **Serverless Function Variables (SECRET - not exposed to browser):**
    ```bash
-   npm install -g vercel
-   vercel --prod
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   FISH_AUDIO_API_KEY=your_fish_audio_api_key_here
    ```
 
-   Or use the Vercel dashboard:
-   - Import repository
-   - Set environment variables from `.env`
-   - Deploy
-
-3. **Deploy to Netlify**
+   **Optional:**
    ```bash
-   npm install -g netlify-cli
-   netlify deploy --prod
+   VITE_OPENROUTER_USE_PAID=false
+   OPENROUTER_USE_PAID=false
+   VITE_CLAUDE_API_KEY=your_claude_api_key_here
    ```
 
-### Backend Deployment (Docker)
+3. **Deploy**
+   - Click "Deploy"
+   - Vercel will automatically build and deploy
+   - Your app will be live at `https://your-project.vercel.app`
+
+4. **Important Notes**
+   - ✅ API keys are stored securely in Vercel (not exposed to browser)
+   - ✅ Serverless functions handle Fish Audio TTS and OpenRouter chat
+   - ✅ All character assets served from `/public/assets/`
+   - ⚠️ DO NOT set `VITE_OPENROUTER_API_KEY` or `VITE_FISH_AUDIO_API_KEY` on Vercel (security risk)
+
+#### Local Testing of Vercel Mode
+
+Before deploying, test locally:
+
+```bash
+cd buddytalk-app
+
+# Create .env with Vercel settings
+cp .env.vercel.example .env
+
+# Edit .env and set:
+# VITE_ENABLE_LIPSYNC=false
+# (other variables as needed)
+
+# Install Vercel CLI
+npm install -g vercel
+
+# Run in Vercel dev mode (simulates serverless functions)
+vercel dev
+```
+
+This starts the app with Vercel's serverless functions running locally.
+
+---
+
+### Option 2: Full Deployment (Local Backend + Vercel Frontend)
+
+**Full features** - Lip-sync video generation enabled
+
+**Cost**: ~$50-100/month (GPU server for Wav2Lip backend)
+
+**Features**:
+- ✅ Voice conversations with characters
+- ✅ All AI chat features
+- ✅ Database persistence
+- ✅ Lip-sync video generation (full experience)
+
+#### Backend Deployment (Docker)
 
 1. **Create Dockerfile** in `wav2lip-backend/`:
    ```dockerfile
@@ -532,30 +601,49 @@ Supabase connection is configured in `buddytalk-app/src/config/supabase.js`:
 
    COPY . .
 
+   # Download Wav2Lip model (not included in repo)
+   # You'll need to add this manually or via volume mount
+
    EXPOSE 8000
    CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
    ```
 
-2. **Build and run**
-   ```bash
-   docker build -t buddytalk-backend .
-   docker run -p 8000:8000 buddytalk-backend
-   ```
-
-3. **Deploy to cloud** (Railway, Render, or AWS):
-   - Push Docker image to registry
+2. **Deploy to cloud with GPU** (Railway, Render, RunPod, or AWS):
+   - Requires GPU for reasonable Wav2Lip performance
+   - Upload Wav2Lip model to `/models/` directory
    - Configure environment variables
    - Set up HTTPS and CORS
 
-### Environment Variables for Production
+3. **Frontend Environment Variables**
+   ```bash
+   VITE_ENABLE_LIPSYNC=true
+   VITE_WAV2LIP_API_URL=https://your-backend-url.com
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_key
+   VITE_OPENROUTER_API_KEY=your_openrouter_key
+   VITE_FISH_AUDIO_API_KEY=your_fish_audio_key
+   ```
 
-Ensure these are set in your deployment platform:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_OPENROUTER_API_KEY`
-- `VITE_FISH_AUDIO_API_KEY`
-- `VITE_FISH_AUDIO_MODEL_ID`
-- `VITE_WAV2LIP_API_URL` (backend URL)
+---
+
+### Deployment Checklist
+
+**Before deploying to Vercel:**
+- [ ] Create Supabase account and database
+- [ ] Get OpenRouter API key (https://openrouter.ai/keys)
+- [ ] Get Fish Audio API key (https://fish.audio)
+- [ ] Connect GitHub repo to Vercel
+- [ ] Set environment variables in Vercel dashboard
+- [ ] Verify `VITE_ENABLE_LIPSYNC=false` is set
+- [ ] DO NOT set API keys as VITE_ variables (security risk!)
+- [ ] Deploy and test
+
+**For full deployment (with backend):**
+- [ ] All checklist items above, plus:
+- [ ] Deploy backend to GPU server
+- [ ] Upload Wav2Lip model (~200MB)
+- [ ] Set `VITE_ENABLE_LIPSYNC=true`
+- [ ] Set `VITE_WAV2LIP_API_URL` to backend URL
 
 ---
 

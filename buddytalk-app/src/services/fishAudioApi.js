@@ -1,10 +1,17 @@
 /**
  * Fish Audio TTS API Service
  * Handles text-to-speech generation using Fish Audio API
+ *
+ * Two modes:
+ * 1. Local mode (with backend): Uses backend proxy at /api/fish-audio/tts
+ * 2. Deployed mode (Vercel): Uses Vercel serverless function at /api/tts
  */
 
 const FISH_AUDIO_API_KEY = import.meta.env.VITE_FISH_AUDIO_API_KEY;
-const PROXY_BASE_URL = '/api/fish-audio'; // Use backend proxy to avoid CORS
+const IS_DEPLOYED = import.meta.env.VITE_ENABLE_LIPSYNC === 'false';
+
+// Use Vercel function when deployed, backend proxy when local
+const PROXY_BASE_URL = IS_DEPLOYED ? '/api' : '/api/fish-audio';
 
 /**
  * Generate speech from text using Fish Audio TTS
@@ -17,7 +24,8 @@ const PROXY_BASE_URL = '/api/fish-audio'; // Use backend proxy to avoid CORS
 export async function generateSpeech(text, options = {}) {
   const { modelId, emotion = null } = options;
 
-  if (!FISH_AUDIO_API_KEY) {
+  // In deployed mode, API key is not needed (handled by Vercel function)
+  if (!IS_DEPLOYED && !FISH_AUDIO_API_KEY) {
     throw new Error('Fish Audio API key not configured. Please add VITE_FISH_AUDIO_API_KEY to .env');
   }
 
@@ -45,15 +53,23 @@ export async function generateSpeech(text, options = {}) {
     console.log('🎤 Generating speech with Fish Audio:', {
       original: text,
       processed: finalText,
-      modelId
+      modelId,
+      mode: IS_DEPLOYED ? 'Vercel (deployed)' : 'Local backend'
     });
+
+    // Build request headers based on mode
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    // Only add API key header for local mode (backend proxy expects it)
+    if (!IS_DEPLOYED) {
+      headers['X-Fish-Audio-Key'] = FISH_AUDIO_API_KEY;
+    }
 
     const response = await fetch(`${PROXY_BASE_URL}/tts?model=s1`, {
       method: 'POST',
-      headers: {
-        'X-Fish-Audio-Key': FISH_AUDIO_API_KEY,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
         text: finalText,
         reference_id: modelId,
@@ -72,7 +88,7 @@ export async function generateSpeech(text, options = {}) {
       let errorMessage = `Fish Audio API error: ${response.status}`;
       try {
         const error = await response.json();
-        errorMessage = error.message || errorMessage;
+        errorMessage = error.error || error.message || errorMessage;
       } catch (e) {
         // Response might not be JSON
       }

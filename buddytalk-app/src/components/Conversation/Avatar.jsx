@@ -4,10 +4,10 @@ export default function Avatar({ character, expression = 'neutral', isSpeaking, 
   const lipSyncVideoRef = useRef(null);
   const [idleVideoLoaded, setIdleVideoLoaded] = useState(false);
 
-  // Get idle media URL from backend (GIF or video)
-  const idleMediaUrl = `/api/characters/${character.id}/idle`;
+  // Get idle media URL from character config (supports both local and deployed modes)
+  const idleMediaUrl = character.assets?.idleAnimation || `/api/characters/${character.id}/idle`;
 
-  console.log('Avatar render:', { status, isSpeaking, hasVideoUrl: !!videoUrl, idleVideoLoaded });
+  console.log('Avatar render:', { status, isSpeaking, hasVideoUrl: !!videoUrl, idleVideoLoaded, idleMediaUrl });
 
   // Play lip-sync video when it loads
   useEffect(() => {
