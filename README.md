@@ -200,7 +200,7 @@ BuddyTalk/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/BuddyTalk.git
+   git clone https://github.com/mlk500/BuddyTalk.git
    cd BuddyTalk
    ```
 
@@ -248,12 +248,20 @@ pip install -r requirements.txt
 - **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 #### Download Wav2Lip Model
-```bash
-cd models
-# Download the Wav2Lip_GAN model
-wget https://github.com/Rudrabha/Wav2Lip/releases/download/models/wav2lip_gan.pth
-cd ..
-```
+The Wav2Lip-SD-GAN model is required for lip-sync video generation.
+
+**Download from Google Drive:**
+1. Go to: https://drive.google.com/drive/folders/153HLrqlBNxzZcHi17PEvP09kkAfzRshM
+2. Download **`Wav2Lip-SD-GAN.pt`** (recommended - better visual quality)
+   - Alternative: `Wav2Lip-SD-NOGAN.pt` (more accurate sync, lower quality)
+3. Move to the models directory:
+   ```bash
+   cd models
+   mv ~/Downloads/Wav2Lip-SD-GAN.pt .
+   cd ..
+   ```
+
+**Note:** The model file is ~200MB and required for video generation.
 
 #### Configure Characters
 Edit `characters/characters.json` to add/modify characters:

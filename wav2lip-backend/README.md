@@ -26,16 +26,17 @@ cd ..
 
 ### 3. Download Pretrained Models
 
-Download the pretrained Wav2Lip model:
+Download the Wav2Lip-SD-GAN model for high-quality lip-sync:
 
-1. Go to [Wav2Lip Releases](https://github.com/Rudrabha/Wav2Lip/releases)
-2. Download `wav2lip_gan.pth` (or `wav2lip.pth` for the non-GAN version)
+1. Go to: https://drive.google.com/drive/folders/153HLrqlBNxzZcHi17PEvP09kkAfzRshM
+2. Download **`Wav2Lip-SD-GAN.pt`** (~200MB)
+   - Recommended for better visual quality
+   - Alternative: `Wav2Lip-SD-NOGAN.pt` for more accurate sync
 3. Place it in the `models/` directory:
 
 ```bash
 mkdir -p models
-# Move the downloaded model file to models/
-mv ~/Downloads/wav2lip_gan.pth models/
+mv ~/Downloads/Wav2Lip-SD-GAN.pt models/
 ```
 
 ### 4. Install System Dependencies (if needed)
