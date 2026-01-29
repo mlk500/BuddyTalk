@@ -284,9 +284,3 @@ fact TEXT
 - Web Speech API (SpeechRecognition & SpeechSynthesis)
 - ES6+ JavaScript
 - Fetch API
-
-**Tested Browsers:**
-
-- Chrome/Safari: Full support ✅
-- Safari: Partial (limited voice selection)
-- Firefox: Limited (STT may not work)
