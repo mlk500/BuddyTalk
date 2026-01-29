@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.local
+.env.production
+*.env
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Backend specific
+wav2lip-backend/models/*
+!wav2lip-backend/models/.gitkeep
+!wav2lip-backend/models/README.md
+wav2lip-backend/uploads/*
+!wav2lip-backend/uploads/.gitkeep
+wav2lip-backend/outputs/*
+!wav2lip-backend/outputs/.gitkeep
+wav2lip-backend/Wav2Lip/
+
+# User data (for local development)
+buddytalk-app/public/users.json
+
+# Cached files
+*.cache
+.parcel-cache/
