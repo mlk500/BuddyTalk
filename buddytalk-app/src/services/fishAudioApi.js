@@ -111,5 +111,10 @@ export async function generateSpeech(text, options = {}) {
  * @returns {boolean}
  */
 export function isFishAudioConfigured(modelId) {
+  // In deployed mode, API key is on server (not in browser), so just check modelId
+  // In local mode, check both API key and modelId
+  if (IS_DEPLOYED) {
+    return !!modelId;
+  }
   return !!FISH_AUDIO_API_KEY && !!modelId;
 }

@@ -544,6 +544,8 @@ export default function Conversation({ character, profile, chat, onExit }) {
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         onExit={handleExitClick}
+        onRetry={status === 'idle' ? audio.startListening : null}
+        transcript={audio.transcript}
       />
 
       <div
